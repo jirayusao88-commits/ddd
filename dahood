@@ -1,0 +1,138 @@
+-- [[ Headless + Korblox + Custom Animation (Optimized & Complete) ]]
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local HEADLESS_MESH_ID = "rbxassetid://1095708"
+local KORBLOX_MESH_ID = "rbxassetid://101851696"
+local KORBLOX_TEXTURE_ID = "rbxassetid://101851254"
+
+-- 1. ฟังก์ชันทำหัวล่องหน (Headless)
+local function applyHeadless(character)
+	if not character then return end
+	local head = character:FindFirstChild("Head")
+	if not head then return end
+
+	head.Transparency = 1
+	head.CanCollide = false
+
+	local face = head:FindFirstChildOfClass("Decal")
+	if face then face:Destroy() end
+
+	for _, v in ipairs(head:GetChildren()) do
+		if v:IsA("SpecialMesh") or v:IsA("CharacterMesh") then
+			v:Destroy()
+		end
+	end
+
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = HEADLESS_MESH_ID
+	mesh.Scale = Vector3.new(0.001, 0.001, 0.001)
+	mesh.Parent = head
+end
+
+-- 2. ฟังก์ชันใส่ขา Korblox (รองรับทั้ง R6 และ R15 อย่างสมบูรณ์)
+local function applyKorblox(character)
+	if not character then return end
+	
+	-- สำหรับตัวละคร R6
+	local rightLeg = character:FindFirstChild("Right Leg")
+	if rightLeg then
+		for _, v in ipairs(rightLeg:GetChildren()) do
+			if v:IsA("SpecialMesh") or v:IsA("CharacterMesh") then
+				v:Destroy()
+			end
+		end
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.FileMesh
+		mesh.MeshId = KORBLOX_MESH_ID
+		mesh.TextureId = KORBLOX_TEXTURE_ID
+		mesh.Scale = Vector3.new(1, 1, 1)
+		mesh.Parent = rightLeg
+	end
+
+	-- สำหรับตัวละคร R15
+	local rightFoot = character:FindFirstChild("RightFoot")
+	local rightLowerLeg = character:FindFirstChild("RightLowerLeg")
+	local rightUpperLeg = character:FindFirstChild("RightUpperLeg")
+
+	if rightFoot then
+		rightFoot.MeshId = "http://www.roblox.com/asset/?id=902942089"
+		rightFoot.Transparency = 1
+	end
+	if rightLowerLeg then
+		rightLowerLeg.MeshId = "http://www.roblox.com/asset/?id=902942093"
+		rightLowerLeg.Transparency = 1
+	end
+	if rightUpperLeg then
+		rightUpperLeg.MeshId = "http://www.roblox.com/asset/?id=902942096"
+		rightUpperLeg.TextureID = "http://roblox.com/asset/?id=902843398"
+	end
+end
+
+-- 3. ฟังก์ชันเปลี่ยนท่าอนิเมชัน (รันครั้งเดียวจบ ไม่กินทรัพยากร)
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+ 
+local function isR6(character)
+    return character:FindFirstChild("Torso") ~= nil and character:FindFirstChild("Right Leg") ~= nil
+end
+ 
+local function runLocalAnimate(character)
+    if isR6(character) then
+        print("Character is R6, script will not run.")
+        return
+    end
+ 
+    local Animate = character.Animate
+    Animate.Disabled = true
+    -- Parando qualquer animação em execução
+    local animtrack = character.Humanoid:GetPlayingAnimationTracks()
+    for _, track in pairs(animtrack) do
+        track:Stop()
+    end
+    -- Substituindo as animações
+    Animate.idle.Animation1.AnimationId = "http://www.roblox.com/asset/?id=616158929"
+    Animate.idle.Animation2.AnimationId = "http://www.roblox.com/asset/?id=616160636"
+    Animate.walk.WalkAnim.AnimationId = "http://www.roblox.com/asset/?id=616168032"
+    Animate.run.RunAnim.AnimationId = "http://www.roblox.com/asset/?id=616163682"
+    Animate.jump.JumpAnim.AnimationId = "http://www.roblox.com/asset/?id=616161997"
+    Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=10921070953" -- Nova animação de escalada
+    Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=616157476"
+    Animate.swim.Swim.AnimationId = "http://www.roblox.com/asset/?id=99384245425157" -- Animação de nadar
+    Animate.swimidle.SwimIdle.AnimationId = "http://www.roblox.com/asset/?id=113199415118199"
+    Animate.Disabled = false
+end
+ 
+local function onCharacterAdded(character)
+    print(character.Name .. " spawned!")
+    if isR6(character) then
+        print("Character is R6, script will not run.")
+        return
+    end
+    wait(0.5)
+    runLocalAnimate(character)
+end
+ 
+plr.CharacterAdded:Connect(onCharacterAdded)
+ 
+-- Chamando a função para o personagem atual, se já estiver presente
+if plr.Character then
+    onCharacterAdded(plr.Character)
+end
+
+-- 4. จัดการเมื่อตัวละครเกิดใหม่ (Character Added)
+player.CharacterAdded:Connect(function(character)
+	task.wait(1) -- รอให้โหลดพาร์ทตัวละครให้ครบก่อน
+	applyHeadless(character)
+	applyKorblox(character)
+	applyAnimations(character)
+end)
+
+-- 5. รันทำงานกับตัวละครปัจจุบันทันที
+if player.Character then
+	applyHeadless(player.Character)
+	applyKorblox(player.Character)
+	applyAnimations(player.Character)
+end
